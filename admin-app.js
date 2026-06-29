@@ -80,7 +80,7 @@ const AdminApp = {
     els.adminPublish.addEventListener("click", () => this.publishToGitHub());
 
     els.adminNew.addEventListener("click", () => {
-      location.hash = "#/edit/new";
+      this.navigateToEditor("new");
     });
     els.editorCancel.addEventListener("click", () => this.goToList());
     els.editorDelete.addEventListener("click", () => this.confirmDelete());
@@ -104,6 +104,7 @@ const AdminApp = {
     });
 
     window.addEventListener("hashchange", () => this.handleRoute());
+    window.addEventListener("popstate", () => this.handleRoute());
   },
 
   updateAuthUI() {
@@ -243,9 +244,18 @@ const AdminApp = {
     }
   },
 
+  navigateToEditor(idOrNew) {
+    const id = idOrNew === "new" ? "new" : encodeURIComponent(idOrNew);
+    location.hash = `#/edit/${id}`;
+  },
+
   goToList() {
-    location.hash = "";
+    const cleanUrl = location.pathname + location.search;
+    if (location.hash) {
+      history.replaceState(null, "", cleanUrl);
+    }
     this.showList();
+    window.scrollTo(0, 0);
   },
 
   handleRoute() {
@@ -253,8 +263,9 @@ const AdminApp = {
 
     const hash = location.hash.replace(/^#\/?/, "");
     if (hash.startsWith("edit/")) {
-      const id = hash.slice(5);
-      this.showEditor(id === "new" ? "new" : id);
+      const rawId = hash.slice(5);
+      const id = rawId === "new" ? "new" : decodeURIComponent(rawId);
+      this.showEditor(id);
       return;
     }
 
@@ -306,7 +317,7 @@ const AdminApp = {
       `;
 
       card.querySelector("[data-edit]").addEventListener("click", () => {
-        location.hash = `#/edit/${entry.id}`;
+        this.navigateToEditor(entry.id);
       });
 
       card.querySelector("[data-delete]").addEventListener("click", async () => {
