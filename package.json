@@ -1,0 +1,7 @@
+{
+  "name": "simsfp-diary",
+  "private": true,
+  "scripts": {
+    "start": "npx serve ."
+  }
+}

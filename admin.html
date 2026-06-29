@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1b5e20">
+  <meta name="robots" content="noindex, nofollow">
+  <title>管理画面 | simsfreeplay 日記</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="admin.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="admin-body">
+
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <p class="login-label">管理者専用</p>
+      <h1 class="login-title">simsfreeplay 日記</h1>
+      <p class="login-text">パスコードを入力してください。</p>
+      <form id="admin-login-form">
+        <input class="editor-input" type="password" name="passphrase" autocomplete="current-password" required>
+        <p id="admin-login-error" class="admin-login-error hidden">パスコードが違います。</p>
+        <button type="submit" class="editor-submit-btn">ログイン</button>
+      </form>
+      <a href="index.html" class="login-back-link">← 公開サイトへ</a>
+    </div>
+  </div>
+
+  <div id="admin-app" class="admin-app hidden">
+    <header class="admin-header">
+      <div class="admin-header-inner">
+        <div>
+          <p class="admin-header-label">管理画面</p>
+          <h1 class="admin-header-title" id="admin-site-title">simsfreeplay 日記</h1>
+        </div>
+        <a href="index.html" class="admin-header-link" target="_blank" rel="noopener">公開サイトを見る ↗</a>
+      </div>
+    </header>
+
+    <div class="admin-bar">
+      <button type="button" id="admin-new-btn" class="admin-bar-btn admin-bar-btn-primary">＋ 新規投稿</button>
+      <button type="button" id="admin-export-btn" class="admin-bar-btn">エクスポート</button>
+      <button type="button" id="admin-logout-btn" class="admin-bar-btn">ログアウト</button>
+    </div>
+
+    <main class="site-main admin-main">
+      <section id="admin-list-view" class="view">
+        <h2 class="admin-section-title">記事一覧</h2>
+        <p class="admin-hint">下書きを含むすべての記事を管理できます。公開サイトに反映するにはエクスポート後、updates.js を更新してください。</p>
+        <div id="admin-article-list" class="admin-article-list"></div>
+        <p id="admin-empty-message" class="empty-message hidden">記事がありません。</p>
+      </section>
+
+      <section id="editor-view" class="view hidden">
+        <div class="editor-header">
+          <h2 id="editor-heading" class="editor-page-title">記事を編集</h2>
+          <button type="button" id="editor-cancel-btn" class="admin-bar-btn">一覧に戻る</button>
+        </div>
+
+        <form id="editor-form" class="editor-form">
+          <input type="hidden" name="id">
+
+          <fieldset class="editor-fieldset">
+            <legend>基本情報</legend>
+            <div class="editor-row">
+              <label class="editor-label" for="editor-date">更新日</label>
+              <input class="editor-input" type="date" id="editor-date" name="date" required>
+            </div>
+            <div class="editor-row">
+              <label class="editor-label" for="editor-version">バージョン</label>
+              <input class="editor-input" type="text" id="editor-version" name="version" placeholder="v5.xx.x" required>
+            </div>
+            <div class="editor-row">
+              <label class="editor-label" for="editor-title">タイトル</label>
+              <input class="editor-input" type="text" id="editor-title" name="title" required>
+            </div>
+            <div class="editor-row">
+              <label class="editor-label" for="editor-summary">一覧用の概要（1行）</label>
+              <input class="editor-input" type="text" id="editor-summary" name="summary">
+            </div>
+            <label class="editor-checkbox">
+              <input type="checkbox" name="draft">
+              下書き（公開サイトには表示しない）
+            </label>
+          </fieldset>
+
+          <fieldset class="editor-fieldset">
+            <legend>公式サマリ</legend>
+            <div class="editor-row">
+              <label class="editor-label" for="editor-official-text">公式の要点</label>
+              <textarea class="editor-textarea" id="editor-official-text" name="officialText" rows="3"></textarea>
+            </div>
+            <div class="editor-row">
+              <label class="editor-label" for="editor-official-url">公式リンク URL</label>
+              <input class="editor-input" type="url" id="editor-official-url" name="officialUrl" placeholder="https://...">
+            </div>
+            <div class="editor-row">
+              <label class="editor-label" for="editor-official-label">リンクの表示名</label>
+              <input class="editor-input" type="text" id="editor-official-label" name="officialLabel" value="公式告知を見る">
+            </div>
+          </fieldset>
+
+          <fieldset class="editor-fieldset">
+            <legend>実際に確認したこと</legend>
+            <div class="editor-row">
+              <label class="editor-label" for="editor-verified-intro">導入文（任意）</label>
+              <textarea class="editor-textarea" id="editor-verified-intro" name="verifiedIntro" rows="2"></textarea>
+            </div>
+            <div id="editor-sections"></div>
+            <button type="button" id="add-section-btn" class="editor-add-btn">＋ セクションを追加</button>
+          </fieldset>
+
+          <fieldset class="editor-fieldset">
+            <legend>スクショ</legend>
+            <div id="editor-screenshots"></div>
+            <button type="button" id="add-screenshot-btn" class="editor-add-btn">＋ スクショを追加</button>
+            <p class="editor-hint">画像は `images/` フォルダに置き、パスを入力してください。</p>
+          </fieldset>
+
+          <fieldset class="editor-fieldset">
+            <legend>まとめ</legend>
+            <textarea class="editor-textarea" name="conclusion" rows="3" placeholder="プレイヤー向けの一言まとめ"></textarea>
+          </fieldset>
+
+          <div class="editor-actions">
+            <button type="submit" class="editor-submit-btn">保存する</button>
+            <button type="button" id="editor-delete-btn" class="editor-delete-btn hidden">記事を削除</button>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <script src="updates.js"></script>
+  <script src="admin-config.js"></script>
+  <script src="common.js"></script>
+  <script src="data-store.js"></script>
+  <script src="admin-app.js"></script>
+</body>
+</html>
