@@ -2,12 +2,23 @@
 
 シムズフリープレイのアップデートを、自分のプレイ結果で詳しく記録するサイトです。
 
+## 公開サイト
+
+
+|           | URL                                                                                                  |
+| --------- | ---------------------------------------------------------------------------------------------------- |
+| **公開サイト** | [https://tain79998-glitch.github.io/simsfp-diary/](https://tain79998-glitch.github.io/simsfp-diary/) |
+| **リポジトリ** | [https://github.com/tain79998-glitch/simsfp-diary](https://github.com/tain79998-glitch/simsfp-diary) |
+
+
 ## 2つの画面
 
-| ページ | URL | 用途 |
-|--------|-----|------|
-| **公開サイト** | `index.html` | 訪問者向け（閲覧のみ） |
-| **管理画面** | `admin.html` | あなた専用（投稿の作成・編集） |
+
+| ページ       | URL          | 用途              |
+| --------- | ------------ | --------------- |
+| **公開サイト** | `index.html` | 訪問者向け（閲覧のみ）     |
+| **管理画面**  | `admin.html` | あなた専用（投稿の作成・編集） |
+
 
 公開サイトには管理ボタンはありません。投稿作業は `admin.html` で行います。
 
@@ -45,10 +56,12 @@ python3 -m http.server 3000
 
 ブラウザで次を開きます:
 
-| 画面 | URL |
-|------|-----|
-| 公開サイト | http://localhost:3000/ |
-| 管理画面 | http://localhost:3000/admin.html |
+
+| 画面    | URL                                                                  |
+| ----- | -------------------------------------------------------------------- |
+| 公開サイト | [http://localhost:3000/](http://localhost:3000/)                     |
+| 管理画面  | [http://localhost:3000/admin.html](http://localhost:3000/admin.html) |
+
 
 `serve` のポート番号が違う場合は、ターミナルに表示された URL を使ってください。
 
@@ -57,7 +70,7 @@ python3 -m http.server 3000
 ブラウザのタブを閉じても、サーバーは動き続けます。止めるには:
 
 1. サーバーを起動した**ターミナル**を開く
-2. **`Ctrl + C`** を押す
+2. `**Ctrl + C**` を押す
 
 これで `http://localhost:3000/` は開けなくなります。  
 ターミナルウィンドウを閉じてもサーバーは止まります。
@@ -93,15 +106,10 @@ git push -u origin main
 
 数分後、次の URL で公開されます:
 
-```
-https://あなたのユーザー名.github.io/simsfp-diary/
-```
+- 公開サイト: [https://tain79998-glitch.github.io/simsfp-diary/](https://tain79998-glitch.github.io/simsfp-diary/)
+- 管理画面: [https://tain79998-glitch.github.io/simsfp-diary/admin.html](https://tain79998-glitch.github.io/simsfp-diary/admin.html)
 
-管理画面:
-
-```
-https://あなたのユーザー名.github.io/simsfp-diary/admin.html
-```
+> 無料プランで GitHub Pages を使うには、リポジトリを **Public** にする必要があります。
 
 **4. 管理画面のセットアップ（公開後）**
 
@@ -144,10 +152,12 @@ cp admin-config.example.js admin-config.js
 
 ### 保存の仕組み
 
-| 保存先 | 見える範囲 |
-|--------|-----------|
-| 管理画面での保存 | あなたのブラウザ（localStorage） |
-| `updates.js` | すべての訪問者 |
+
+| 保存先          | 見える範囲                  |
+| ------------ | ---------------------- |
+| 管理画面での保存     | あなたのブラウザ（localStorage） |
+| `updates.js` | すべての訪問者                |
+
 
 **他の人にも見せる手順:**
 
@@ -175,7 +185,7 @@ simsfp-diary/
 
 ## GitHub Pages で公開
 
-- 公開サイト: `index.html` がトップとして表示されます
+- 公開サイト: [https://tain79998-glitch.github.io/simsfp-diary/（`index.html`](https://tain79998-glitch.github.io/simsfp-diary/（`index.html`) がトップ）
 - `admin.html` は URL を知っている人だけアクセス可能（検索エンジンには `noindex`）
 
 ## 要件定義
