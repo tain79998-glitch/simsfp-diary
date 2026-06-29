@@ -41,14 +41,30 @@
 
     <div class="admin-bar">
       <button type="button" id="admin-new-btn" class="admin-bar-btn admin-bar-btn-primary">＋ 新規投稿</button>
+      <button type="button" id="admin-publish-btn" class="admin-bar-btn admin-bar-btn-primary hidden">GitHubに公開</button>
+      <button type="button" id="admin-github-btn" class="admin-bar-btn">GitHub連携</button>
       <button type="button" id="admin-export-btn" class="admin-bar-btn">エクスポート</button>
       <button type="button" id="admin-logout-btn" class="admin-bar-btn">ログアウト</button>
     </div>
 
+    <div id="github-setup-panel" class="github-setup-panel hidden">
+      <p class="github-setup-title">別の端末からも編集するには GitHub 連携が必要です</p>
+      <p class="admin-hint">GitHub の Personal Access Token を入力すると、記事の保存がそのまま GitHub に反映され、スマホなど別端末からも同じ記事を編集できます。</p>
+      <label class="editor-label" for="github-token-input">GitHub トークン</label>
+      <input class="editor-input" type="password" id="github-token-input" autocomplete="off" placeholder="ghp_...">
+      <div class="github-setup-actions">
+        <button type="button" id="github-token-save-btn" class="admin-bar-btn admin-bar-btn-primary">連携する</button>
+        <button type="button" id="github-token-clear-btn" class="admin-bar-btn">トークンを削除</button>
+      </div>
+      <p id="github-setup-error" class="admin-login-error hidden"></p>
+    </div>
+
+    <p id="admin-sync-status" class="admin-sync-status hidden"></p>
+
     <main class="site-main admin-main">
       <section id="admin-list-view" class="view">
         <h2 class="admin-section-title">記事一覧</h2>
-        <p class="admin-hint">下書きを含むすべての記事を管理できます。公開サイトに反映するにはエクスポート後、updates.js を更新してください。</p>
+        <p class="admin-hint">GitHub 連携後は保存すると自動で公開サイトに反映されます。連携していない場合はエクスポート後、手動で `updates.js` を更新してください。</p>
         <div id="admin-article-list" class="admin-article-list"></div>
         <p id="admin-empty-message" class="empty-message hidden">記事がありません。</p>
       </section>
@@ -136,6 +152,8 @@
   <script src="updates.js"></script>
   <script src="admin-config.js"></script>
   <script src="common.js"></script>
+  <script src="updates-builder.js"></script>
+  <script src="github-sync.js"></script>
   <script src="data-store.js"></script>
   <script src="admin-app.js"></script>
 </body>

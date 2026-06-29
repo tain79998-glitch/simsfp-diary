@@ -95,7 +95,7 @@ git remote add origin https://github.com/あなたのユーザー名/simsfp-diar
 git push -u origin main
 ```
 
-> `admin-config.js` は `.gitignore` 済みなので push されません（安全）。
+> `admin-config.js` はリポジトリに含まれます（パスコードはハッシュ化）。GitHub トークンは各端末のブラウザにのみ保存されます。
 
 **3. GitHub Pages を有効化**
 
@@ -111,16 +111,25 @@ git push -u origin main
 
 > 無料プランで GitHub Pages を使うには、リポジトリを **Public** にする必要があります。
 
-**4. 管理画面のセットアップ（公開後）**
+**4. 別の端末から管理画面を使う（GitHub 連携）**
 
-GitHub Pages 上では `admin-config.js` は含まれないため、  
-公開後に **ローカルで** `admin-config.js` を用意した状態で `admin.html` を開くか、  
-デプロイ用に別途設定が必要です。
+スマホなど別端末からも記事を書けるようにするには、管理画面で **GitHub 連携** を設定します。
+
+1. 管理画面にログイン（パスコードは `admin-config.js` に設定）
+2. **GitHub連携** を開く
+3. GitHub の [Personal Access Token](https://github.com/settings/tokens) を作成
+   - **Fine-grained token** 推奨
+   - 対象リポジトリ: `simsfp-diary`
+   - 権限: **Contents** の Read and write
+4. トークンを入力して **連携する**
+
+連携後は、記事の保存がそのまま `updates.js` に反映され、数分後に公開サイトへ載ります。  
+トークンは各端末のブラウザに1回だけ保存されます（GitHub には送られません）。
 
 **おすすめ運用:**
 
-- **記事の編集** → ローカルで `npm start` → `admin.html` で編集
-- **公開** → `updates.js` を更新して GitHub に push → 全員に反映
+- **記事の編集** → どの端末でも `admin.html` を開く（GitHub Pages またはローカル）
+- **公開** → 保存すると自動で GitHub に反映（連携時）／未連携時は手動で `updates.js` を push
 
 ---
 
@@ -136,34 +145,33 @@ npx serve .
 
 ## 初回セットアップ（管理画面）
 
+`admin-config.js` にパスコード（ハッシュ）と GitHub リポジトリ情報が入っています。  
+初回ログイン後、別端末から編集する場合は **GitHub連携** でトークンを設定してください。
+
+パスコードを変えるときは、新しい文字列の SHA-256 ハッシュを `passphraseHash` に設定します。
+
 ```bash
-cp admin-config.example.js admin-config.js
+python3 -c "import hashlib; print(hashlib.sha256('新しいパスコード'.encode()).hexdigest())"
 ```
 
-`admin-config.js` の `passphrase` を自分だけのパスコードに変更してください（Git 管理外）。
+> パスコードは完全な秘密にはなりません（リポジトリが Public のため）。  
+> なりすまし防止と偶然のアクセス防止程度の用途です。本格的な保護には GitHub トークンの管理が重要です。
 
 ## 記事の作成・編集
 
-1. `admin.html` を開く
+1. `admin.html` を開く（ローカルまたは GitHub Pages）
 2. パスコードでログイン
-3. **＋ 新規投稿** または一覧の **編集**
-4. **下書き** にチェック → 公開サイトには表示されない
-5. チェックを外して保存 → `updates.js` に反映後、全員に公開
+3. 初回のみ **GitHub連携** でトークンを設定（別端末でも同様に1回ずつ）
+4. **＋ 新規投稿** または一覧の **編集**
+5. **下書き** にチェック → 公開サイトには表示されない
+6. **保存する** → GitHub 連携時は自動公開／未連携時はエクスポートして手動反映
 
 ### 保存の仕組み
 
-
-| 保存先          | 見える範囲                  |
-| ------------ | ---------------------- |
-| 管理画面での保存     | あなたのブラウザ（localStorage） |
-| `updates.js` | すべての訪問者                |
-
-
-**他の人にも見せる手順:**
-
-1. 管理画面で **エクスポート**（JSON ダウンロード）
-2. 内容を `updates.js` の `ENTRIES` に反映
-3. GitHub に push
+| モード | 保存先 | 見える範囲 |
+|--------|--------|-----------|
+| GitHub 連携あり | `updates.js`（GitHub 経由） | すべての訪問者 |
+| GitHub 連携なし | ブラウザ（localStorage） | その端末だけ |
 
 ## ファイル構成
 
@@ -176,8 +184,10 @@ simsfp-diary/
 ├── common.js           # 共通ユーティリティ
 ├── public-store.js     # 公開用データ読み込み
 ├── data-store.js       # 管理用データ読み書き
+├── updates-builder.js  # updates.js の生成・解析
+├── github-sync.js      # GitHub API 連携
 ├── updates.js          # 公開記事データ（Git 管理）
-├── admin-config.js     # パスコード（Git 管理外）
+├── admin-config.js     # パスコードと GitHub 設定
 ├── style.css           # 共通スタイル
 ├── admin.css           # 管理画面スタイル
 └── images/

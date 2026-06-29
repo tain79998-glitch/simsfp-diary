@@ -1,7 +1,7 @@
 const AdminApp = {
   els: {},
 
-  init() {
+  async init() {
     if (!DataStore.isAdminEnabled()) {
       document.getElementById("login-screen").innerHTML =
         '<div class="login-card"><p class="admin-login-error">admin-config.js が未設定です。<br>README を参照してセットアップしてください。</p><a href="index.html" class="login-back-link">← 公開サイトへ</a></div>';
@@ -13,6 +13,7 @@ const AdminApp = {
     this.updateAuthUI();
 
     if (DataStore.isAuthenticated()) {
+      await this.bootstrapAfterLogin();
       this.handleRoute();
     }
   },
@@ -36,21 +37,30 @@ const AdminApp = {
       addSection: document.getElementById("add-section-btn"),
       addScreenshot: document.getElementById("add-screenshot-btn"),
       adminNew: document.getElementById("admin-new-btn"),
+      adminPublish: document.getElementById("admin-publish-btn"),
+      adminGithub: document.getElementById("admin-github-btn"),
       adminLogout: document.getElementById("admin-logout-btn"),
       exportBtn: document.getElementById("admin-export-btn"),
+      githubSetupPanel: document.getElementById("github-setup-panel"),
+      githubTokenInput: document.getElementById("github-token-input"),
+      githubTokenSave: document.getElementById("github-token-save-btn"),
+      githubTokenClear: document.getElementById("github-token-clear-btn"),
+      githubSetupError: document.getElementById("github-setup-error"),
+      syncStatus: document.getElementById("admin-sync-status"),
     };
   },
 
   bindEvents() {
     const { els } = this;
 
-    els.loginForm.addEventListener("submit", (e) => {
+    els.loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const input = els.loginForm.querySelector('input[name="passphrase"]');
-      if (DataStore.login(input.value)) {
+      if (await DataStore.login(input.value)) {
         input.value = "";
         els.loginError.classList.add("hidden");
         this.updateAuthUI();
+        await this.bootstrapAfterLogin();
         this.showList();
       } else {
         els.loginError.classList.remove("hidden");
@@ -60,8 +70,14 @@ const AdminApp = {
     els.adminLogout.addEventListener("click", () => {
       DataStore.logout();
       this.updateAuthUI();
+      this.updateSyncUI();
       location.hash = "";
     });
+
+    els.adminGithub.addEventListener("click", () => this.toggleGitHubSetup());
+    els.githubTokenSave.addEventListener("click", () => this.saveGitHubToken());
+    els.githubTokenClear.addEventListener("click", () => this.clearGitHubToken());
+    els.adminPublish.addEventListener("click", () => this.publishToGitHub());
 
     els.adminNew.addEventListener("click", () => this.showEditor("new"));
     els.editorCancel.addEventListener("click", () => {
@@ -94,8 +110,136 @@ const AdminApp = {
     const authed = DataStore.isAuthenticated();
     this.els.loginScreen.classList.toggle("hidden", authed);
     this.els.adminApp.classList.toggle("hidden", !authed);
-    if (authed && typeof SITE !== "undefined") {
-      document.getElementById("admin-site-title").textContent = SITE.title;
+    if (authed) {
+      document.getElementById("admin-site-title").textContent = DataStore.getSite().title;
+    }
+  },
+
+  async bootstrapAfterLogin() {
+    this.updateSyncUI();
+
+    if (!DataStore.canUseGitHub()) return;
+
+    if (!DataStore.isGitHubReady()) {
+      this.showGitHubSetup(true);
+      return;
+    }
+
+    try {
+      await DataStore.enableGitHubSync();
+      this.showGitHubSetup(false);
+      this.updateSyncUI();
+    } catch (error) {
+      this.showGitHubSetup(true);
+      this.setGitHubError(error.message);
+    }
+  },
+
+  updateSyncUI() {
+    const { els } = this;
+    const canUseGitHub = DataStore.canUseGitHub();
+    const ready = DataStore.useGitHub;
+
+    els.adminPublish.classList.toggle("hidden", ready || !canUseGitHub);
+    els.syncStatus.classList.toggle("hidden", !canUseGitHub);
+
+    if (!canUseGitHub) return;
+
+    if (ready) {
+      els.syncStatus.textContent = "GitHub 連携中 — 保存すると公開サイトに自動反映されます。";
+      els.syncStatus.className = "admin-sync-status is-online";
+      return;
+    }
+
+    if (DataStore.isGitHubReady()) {
+      els.syncStatus.textContent = "GitHub トークンは保存済みです。連携を完了してください。";
+    } else {
+      els.syncStatus.textContent = "GitHub 未連携 — 別端末から編集するにはトークン設定が必要です。";
+    }
+    els.syncStatus.className = "admin-sync-status";
+  },
+
+  showGitHubSetup(show) {
+    this.els.githubSetupPanel.classList.toggle("hidden", !show);
+    if (show && GitHubSync.hasToken()) {
+      this.els.githubTokenInput.value = GitHubSync.getToken();
+    }
+  },
+
+  toggleGitHubSetup() {
+    this.els.githubSetupPanel.classList.toggle("hidden");
+    if (!this.els.githubSetupPanel.classList.contains("hidden") && GitHubSync.hasToken()) {
+      this.els.githubTokenInput.value = GitHubSync.getToken();
+    }
+  },
+
+  setGitHubError(message) {
+    if (!message) {
+      this.els.githubSetupError.classList.add("hidden");
+      this.els.githubSetupError.textContent = "";
+      return;
+    }
+    this.els.githubSetupError.textContent = message;
+    this.els.githubSetupError.classList.remove("hidden");
+  },
+
+  async saveGitHubToken() {
+    const token = this.els.githubTokenInput.value.trim();
+    if (!token) {
+      this.setGitHubError("トークンを入力してください。");
+      return;
+    }
+
+    GitHubSync.saveToken(token);
+    this.setGitHubError("");
+
+    try {
+      await DataStore.enableGitHubSync();
+      this.showGitHubSetup(false);
+      this.updateSyncUI();
+      this.renderAdminList();
+      alert("GitHub 連携が完了しました。");
+    } catch (error) {
+      GitHubSync.saveToken("");
+      this.setGitHubError(error.message);
+    }
+  },
+
+  clearGitHubToken() {
+    GitHubSync.saveToken("");
+    DataStore.useGitHub = false;
+    DataStore.remoteEntries = null;
+    DataStore.remoteSite = null;
+    this.els.githubTokenInput.value = "";
+    this.setGitHubError("");
+    this.updateSyncUI();
+    this.showGitHubSetup(true);
+  },
+
+  async publishToGitHub(message) {
+    if (!DataStore.isGitHubReady()) {
+      alert("先に GitHub 連携を設定してください。");
+      this.showGitHubSetup(true);
+      return;
+    }
+
+    if (!DataStore.useGitHub) {
+      try {
+        await DataStore.enableGitHubSync();
+      } catch (error) {
+        alert(error.message);
+        return;
+      }
+    }
+
+    try {
+      await DataStore.publishToGitHub(message || "Update articles from admin");
+      await DataStore.enableGitHubSync();
+      this.updateSyncUI();
+      this.renderAdminList();
+      alert("GitHub に公開しました。数分後に公開サイトへ反映されます。");
+    } catch (error) {
+      alert(error.message);
     }
   },
 
@@ -115,7 +259,7 @@ const AdminApp = {
   showList() {
     this.els.editorView.classList.add("hidden");
     this.els.adminListView.classList.remove("hidden");
-    document.title = `管理画面 | ${SITE.title}`;
+    document.title = `管理画面 | ${DataStore.getSite().title}`;
     this.renderAdminList();
   },
 
@@ -160,10 +304,13 @@ const AdminApp = {
         location.hash = `#/edit/${entry.id}`;
       });
 
-      card.querySelector("[data-delete]").addEventListener("click", () => {
+      card.querySelector("[data-delete]").addEventListener("click", async () => {
         if (confirm(`「${entry.title}」を削除しますか？`)) {
           DataStore.deleteEntry(entry.id);
-          this.renderAdminList();
+          if (DataStore.useGitHub) {
+            await this.publishToGitHub(`Delete: ${entry.title}`);
+            return;
+          }
         }
       });
 
@@ -308,7 +455,7 @@ const AdminApp = {
       .filter((shot) => shot.src);
   },
 
-  saveForm() {
+  async saveForm() {
     const form = this.els.editorForm;
     const entry = {
       id: form.elements.id.value.trim(),
@@ -336,13 +483,28 @@ const AdminApp = {
     }
 
     DataStore.saveEntry(entry);
+
+    if (DataStore.useGitHub) {
+      try {
+        await this.publishToGitHub(`Update: ${entry.title}`);
+      } catch (error) {
+        alert(`保存しましたが公開に失敗しました: ${error.message}`);
+      }
+    }
+
     location.hash = "";
   },
 
-  confirmDelete() {
+  async confirmDelete() {
     const id = this.els.editorForm.elements.id.value;
     if (!confirm("この記事を削除しますか？")) return;
+    const entry = DataStore.getEntry(id);
     DataStore.deleteEntry(id);
+    if (DataStore.useGitHub) {
+      await this.publishToGitHub(`Delete: ${entry?.title || id}`);
+      location.hash = "";
+      return;
+    }
     location.hash = "";
   },
 
