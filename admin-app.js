@@ -79,10 +79,10 @@ const AdminApp = {
     els.githubTokenClear.addEventListener("click", () => this.clearGitHubToken());
     els.adminPublish.addEventListener("click", () => this.publishToGitHub());
 
-    els.adminNew.addEventListener("click", () => this.showEditor("new"));
-    els.editorCancel.addEventListener("click", () => {
-      location.hash = "";
+    els.adminNew.addEventListener("click", () => {
+      location.hash = "#/edit/new";
     });
+    els.editorCancel.addEventListener("click", () => this.goToList());
     els.editorDelete.addEventListener("click", () => this.confirmDelete());
     els.addSection.addEventListener("click", () => this.addSectionBlock());
     els.addScreenshot.addEventListener("click", () => this.addScreenshotBlock());
@@ -241,6 +241,11 @@ const AdminApp = {
     } catch (error) {
       alert(error.message);
     }
+  },
+
+  goToList() {
+    location.hash = "";
+    this.showList();
   },
 
   handleRoute() {
@@ -492,7 +497,7 @@ const AdminApp = {
       }
     }
 
-    location.hash = "";
+    this.goToList();
   },
 
   async confirmDelete() {
@@ -502,10 +507,8 @@ const AdminApp = {
     DataStore.deleteEntry(id);
     if (DataStore.useGitHub) {
       await this.publishToGitHub(`Delete: ${entry?.title || id}`);
-      location.hash = "";
-      return;
     }
-    location.hash = "";
+    this.goToList();
   },
 
   exportData() {
