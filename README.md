@@ -115,16 +115,51 @@ git push -u origin main
 
 スマホなど別端末からも記事を書けるようにするには、管理画面で **GitHub 連携** を設定します。
 
-1. 管理画面にログイン（パスコードは `admin-config.js` に設定）
-2. **GitHub連携** を開く
-3. GitHub の [Personal Access Token](https://github.com/settings/tokens) を作成
-   - **Fine-grained token** 推奨
-   - 対象リポジトリ: `simsfp-diary`
-   - 権限: **Contents** の Read and write
-4. トークンを入力して **連携する**
+#### GitHub トークンの作り方
+
+1. [GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens](https://github.com/settings/personal-access-tokens) を開く
+2. **Generate new token** をクリック
+3. 次のように入力する
+
+| 項目 | 設定 |
+|------|------|
+| **Token name** | 例: `simsfp-diary-admin`（何でも可） |
+| **Description** | 空欄でも可。例: `日記サイトの管理画面用` |
+| **Resource owner** | 自分のアカウント（例: `tain79998-glitch`） |
+| **Expiration** | お好みで（例: 30 days。期限切れ後は作り直し） |
+| **Repository access** | **Only select repositories** を選び、`simsfp-diary` にチェック |
+
+> **注意:** 「Public repositories」ではなく **Only select repositories** を選んでください。選び方を間違えると連携に失敗します。
+
+4. **Repository permissions** を開き、次だけ変更する
+
+| 項目 | 設定 |
+|------|------|
+| **Contents** | **Read and write** |
+| その他 | **No access** のまま |
+
+5. 一番下の **Generate token** をクリック
+6. 表示された `github_pat_...` をコピーする（この画面を閉じると二度と表示されません）
+
+#### 管理画面で連携する
+
+1. 管理画面を開く  
+   - GitHub Pages: https://tain79998-glitch.github.io/simsfp-diary/admin.html  
+   - ローカル: http://localhost:3000/admin.html
+2. パスコードでログイン
+3. **GitHub連携** を開く
+4. コピーしたトークンを貼り付けて **連携する** をクリック
 
 連携後は、記事の保存がそのまま `updates.js` に反映され、数分後に公開サイトへ載ります。  
 トークンは各端末のブラウザに1回だけ保存されます（GitHub には送られません）。
+
+#### うまくいかないとき
+
+| 症状 | よくある原因 |
+|------|-------------|
+| `404` や取得失敗 | Repository access で `simsfp-diary` を選んでいない |
+| `403` や権限エラー | Contents が **Read and write** になっていない |
+| 連携できない | トークンの前後に空白が入っている、または期限切れ |
 
 **おすすめ運用:**
 
@@ -195,7 +230,7 @@ simsfp-diary/
 
 ## GitHub Pages で公開
 
-- 公開サイト: [https://tain79998-glitch.github.io/simsfp-diary/（`index.html`](https://tain79998-glitch.github.io/simsfp-diary/（`index.html`) がトップ）
+- 公開サイト: https://tain79998-glitch.github.io/simsfp-diary/（`index.html` がトップ）
 - `admin.html` は URL を知っている人だけアクセス可能（検索エンジンには `noindex`）
 
 ## 要件定義
