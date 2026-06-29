@@ -45,7 +45,8 @@ const DataStore = {
 
   /** 管理者用: updates.js + ローカル編集をマージ */
   getAdminEntries() {
-    if (this.useGitHub && this.remoteEntries) {
+    if (this.useGitHub) {
+      if (!this.remoteEntries) return [];
       return [...this.remoteEntries].sort((a, b) => b.date.localeCompare(a.date));
     }
 
@@ -179,6 +180,7 @@ const DataStore = {
     this.remoteSite = parsed.site;
     this.remoteEntries = parsed.entries;
     this.useGitHub = true;
+    this.clearLocalDrafts();
     return true;
   },
 

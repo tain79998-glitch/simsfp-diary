@@ -1,5 +1,6 @@
 const AdminApp = {
   els: {},
+  lastRefreshAt: 0,
 
   async init() {
     if (!DataStore.isAdminEnabled()) {
@@ -37,6 +38,7 @@ const AdminApp = {
       addSection: document.getElementById("add-section-btn"),
       addScreenshot: document.getElementById("add-screenshot-btn"),
       adminNew: document.getElementById("admin-new-btn"),
+      adminRefresh: document.getElementById("admin-refresh-btn"),
       adminPublish: document.getElementById("admin-publish-btn"),
       adminGithub: document.getElementById("admin-github-btn"),
       adminLogout: document.getElementById("admin-logout-btn"),
@@ -75,6 +77,7 @@ const AdminApp = {
     });
 
     els.adminGithub.addEventListener("click", () => this.toggleGitHubSetup());
+    els.adminRefresh.addEventListener("click", () => this.refreshFromGitHub(true));
     els.githubTokenSave.addEventListener("click", () => this.saveGitHubToken());
     els.githubTokenClear.addEventListener("click", () => this.clearGitHubToken());
     els.adminPublish.addEventListener("click", () => this.publishToGitHub());
@@ -105,6 +108,16 @@ const AdminApp = {
 
     window.addEventListener("hashchange", () => this.handleRoute());
     window.addEventListener("popstate", () => this.handleRoute());
+    document.addEventListener("visibilitychange", () => {
+      if (
+        document.visibilityState === "visible" &&
+        DataStore.isAuthenticated() &&
+        DataStore.useGitHub &&
+        Date.now() - this.lastRefreshAt > 30000
+      ) {
+        this.refreshFromGitHub(false);
+      }
+    });
   },
 
   updateAuthUI() {
@@ -128,6 +141,7 @@ const AdminApp = {
 
     try {
       await DataStore.enableGitHubSync();
+      this.lastRefreshAt = Date.now();
       this.showGitHubSetup(false);
       this.updateSyncUI();
     } catch (error) {
@@ -142,12 +156,16 @@ const AdminApp = {
     const ready = DataStore.useGitHub;
 
     els.adminPublish.classList.toggle("hidden", ready || !canUseGitHub);
+    els.adminRefresh.classList.toggle("hidden", !ready);
     els.syncStatus.classList.toggle("hidden", !canUseGitHub);
 
     if (!canUseGitHub) return;
 
     if (ready) {
-      els.syncStatus.textContent = "GitHub 連携中 — 保存すると公開サイトに自動反映されます。";
+      const syncedAt = this.lastRefreshAt
+        ? `（最終取得: ${this.formatSyncTime(this.lastRefreshAt)}）`
+        : "";
+      els.syncStatus.textContent = `GitHub 連携中 — 保存すると公開サイトに自動反映されます。${syncedAt}`;
       els.syncStatus.className = "admin-sync-status is-online";
       return;
     }
@@ -196,6 +214,7 @@ const AdminApp = {
 
     try {
       await DataStore.enableGitHubSync();
+      this.lastRefreshAt = Date.now();
       this.showGitHubSetup(false);
       this.updateSyncUI();
       this.renderAdminList();
@@ -236,11 +255,44 @@ const AdminApp = {
     try {
       await DataStore.publishToGitHub(message || "Update articles from admin");
       await DataStore.enableGitHubSync();
+      this.lastRefreshAt = Date.now();
       this.updateSyncUI();
       this.renderAdminList();
       alert("GitHub に公開しました。数分後に公開サイトへ反映されます。");
     } catch (error) {
       alert(error.message);
+    }
+  },
+
+  formatSyncTime(timestamp) {
+    return new Date(timestamp).toLocaleString("ja-JP", {
+      month: "numeric",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  },
+
+  async refreshFromGitHub(showFeedback = false) {
+    if (!DataStore.isGitHubReady()) {
+      if (showFeedback) {
+        alert("先に GitHub 連携を設定してください。");
+        this.showGitHubSetup(true);
+      }
+      return false;
+    }
+
+    try {
+      await DataStore.enableGitHubSync();
+      this.lastRefreshAt = Date.now();
+      this.updateSyncUI();
+      this.renderAdminList();
+      if (showFeedback) alert("GitHub から最新の記事を取得しました。");
+      return true;
+    } catch (error) {
+      if (showFeedback) alert(error.message);
+      this.setGitHubError(error.message);
+      return false;
     }
   },
 
@@ -254,7 +306,7 @@ const AdminApp = {
     if (location.hash) {
       history.replaceState(null, "", cleanUrl);
     }
-    this.showList();
+    this.showList({ refresh: true });
     window.scrollTo(0, 0);
   },
 
@@ -269,13 +321,18 @@ const AdminApp = {
       return;
     }
 
-    this.showList();
+    this.showList({ refresh: true });
   },
 
-  showList() {
+  async showList({ refresh = false } = {}) {
     this.els.editorView.classList.add("hidden");
     this.els.adminListView.classList.remove("hidden");
     document.title = `管理画面 | ${DataStore.getSite().title}`;
+
+    if (refresh && DataStore.useGitHub) {
+      await this.refreshFromGitHub(false);
+    }
+
     this.renderAdminList();
   },
 

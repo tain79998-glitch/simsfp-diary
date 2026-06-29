@@ -41,6 +41,7 @@
 
     <div class="admin-bar">
       <button type="button" id="admin-new-btn" class="admin-bar-btn admin-bar-btn-primary">＋ 新規投稿</button>
+      <button type="button" id="admin-refresh-btn" class="admin-bar-btn hidden">最新を取得</button>
       <button type="button" id="admin-publish-btn" class="admin-bar-btn admin-bar-btn-primary hidden">GitHubに公開</button>
       <button type="button" id="admin-github-btn" class="admin-bar-btn">GitHub連携</button>
       <button type="button" id="admin-export-btn" class="admin-bar-btn">エクスポート</button>
@@ -64,7 +65,7 @@
     <main class="site-main admin-main">
       <section id="admin-list-view" class="view">
         <h2 class="admin-section-title">記事一覧</h2>
-        <p class="admin-hint">GitHub 連携後は保存すると自動で公開サイトに反映されます。連携していない場合はエクスポート後、手動で `updates.js` を更新してください。</p>
+        <p class="admin-hint">GitHub 連携後は保存すると自動で公開サイトに反映されます。別端末で投稿した場合は <strong>最新を取得</strong> を押すか、記事一覧を開き直してください。</p>
         <div id="admin-article-list" class="admin-article-list"></div>
         <p id="admin-empty-message" class="empty-message hidden">記事がありません。</p>
       </section>
